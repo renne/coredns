@@ -1,0 +1,53 @@
+name: Sync upstream & add mdns plugin
+
+on:
+  schedule:
+    # Täglich um 2 Uhr UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Manuell auslösbar
+
+jobs:
+  sync-and-append:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/coredns/coredns.git
+          git fetch upstream master --tags
+
+      - name: Merge upstream/master into fork
+        run: |
+          git merge -X theirs upstream/master --no-edit || git merge --abort
+
+      - name: Ensure mdns plugin in plugin.cfg (append if missing)
+        run: |
+          # Falls Datei fehlt, abbrechen
+          test -f plugin.cfg
+
+          # mdns-Zeile nur anhängen, wenn sie noch nicht existiert
+          if ! grep -q '^mdns:github.com/coredns/mdns' plugin.cfg; then
+            printf '\nmdns:github.com/coredns/mdns\n' >> plugin.cfg
+          fi
+
+          # Nur committen, wenn sich etwas geändert hat
+          if ! git diff --quiet plugin.cfg; then
+            git add plugin.cfg
+            git commit -m "Append mdns plugin to plugin.cfg via GitHub Actions"
+          fi
+
+      - name: Push changes
+        run: |
+          git push origin master
