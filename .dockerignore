@@ -8,6 +8,5 @@ coredns
 .gitignore
 *.md
 LICENSE
-CODEOWNERS
 notes/
 man/
