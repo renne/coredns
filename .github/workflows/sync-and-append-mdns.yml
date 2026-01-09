@@ -38,8 +38,8 @@ jobs:
           test -f plugin.cfg
 
           # mdns-Zeile nur anhängen, wenn sie noch nicht existiert
-          if ! grep -q '^mdns:github.com/coredns/mdns' plugin.cfg; then
-            printf '\nmdns:github.com/coredns/mdns\n' >> plugin.cfg
+          if ! grep -q '^mdns:github.com/openshift/coredns-mdns' plugin.cfg; then
+            printf '\nmdns:github.com/openshift/coredns-mdns\n' >> plugin.cfg
           fi
 
           # Nur committen, wenn sich etwas geändert hat
