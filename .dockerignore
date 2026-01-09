@@ -1,2 +1,13 @@
-*
-!coredns
+# Exclude build artifacts and temporary files
+coredns
+*.swp
+*.swo
+*~
+.git
+.github
+.gitignore
+*.md
+LICENSE
+CODEOWNERS
+notes/
+man/
