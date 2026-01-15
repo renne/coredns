@@ -31,6 +31,8 @@ jobs:
       - name: Merge upstream/master into fork
         run: |
           git merge -X theirs upstream/master --no-edit || git merge --abort
+          # Restore workflow files from fork to avoid permission issues
+          git checkout HEAD -- .github/workflows/
 
       - name: Ensure mdns plugin in plugin.cfg (append if missing)
         run: |
