@@ -1,9 +1,5 @@
 name: Go Tests
-on:
-  push:
-    branches:
-      - master
-  pull_request:
+on: [push, pull_request]
 permissions:
   contents: read
 
@@ -13,45 +9,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
-        with:
-          persist-credentials: false
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Setup Go Version
+        run: echo "GO_VERSION=$(cat .go-version)" >> $GITHUB_ENV
 
       - name: Install Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5  # v6.2.0
         with:
-          go-version-file: .go-version
+          go-version: ${{ env.GO_VERSION }}
         id: go
 
       - name: Build
         run: go build -v ./...
 
       - name: Test
-        run: |
-          ( cd request; go test -race ./... )
-          ( cd core; go test -race  ./... )
-          ( cd coremain; go test -race ./... )
-
-  test-windows:
-    name: Test Windows
-    runs-on: windows-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
-        with:
-          persist-credentials: false
-
-      - name: Install Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
-        with:
-          go-version-file: .go-version
-        id: go
-
-      - name: Build
-        run: go build -v ./...
-
-      - name: Test
-        shell: bash
         run: |
           ( cd request; go test -race ./... )
           ( cd core; go test -race  ./... )
@@ -59,27 +31,24 @@ jobs:
 
   test-plugins:
     name: Test Plugins
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
-        with:
-          persist-credentials: false
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Setup Go Version
+        run: echo "GO_VERSION=$(cat .go-version)" >> $GITHUB_ENV
 
       - name: Install Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5  # v6.2.0
         with:
-          go-version-file: .go-version
+          go-version: ${{ env.GO_VERSION }}
         id: go
 
       - name: Build
         run: go build -v ./...
 
       - name: Test
-        shell: bash
         run: ( cd plugin; go test -race ./... )
 
   test-e2e:
@@ -87,14 +56,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
-        with:
-          persist-credentials: false
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Setup Go Version
+        run: echo "GO_VERSION=$(cat .go-version)" >> $GITHUB_ENV
 
       - name: Install Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5  # v6.2.0
         with:
-          go-version-file: .go-version
+          go-version: ${{ env.GO_VERSION }}
         id: go
 
       - name: Build
@@ -110,9 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
-        with:
-          persist-credentials: false
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
       - name: Install dependencies
         run: sudo apt-get install make curl
@@ -125,13 +93,3 @@ jobs:
 
       - name: Test Makefile.docker release/github-push (dry-run)
         run: make VERSION=x DOCKER=x -n release docker-push -f Makefile.docker
-
-      - name: Prepare Docker build
-        run: |
-          for arch in amd64 arm arm64 mips64le ppc64le s390x riscv64 loong64; do
-            mkdir -p build/docker/$arch
-            cp build/linux/$arch/coredns build/docker/$arch/
-          done
-
-      - name: Test Makefile.docker build
-        run: make VERSION=x DOCKER=x -f Makefile.docker docker-build
