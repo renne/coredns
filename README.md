@@ -52,6 +52,15 @@ And more. Each of the plugins is documented. See [coredns.io/plugins](https://co
 for all in-tree plugins, and [coredns.io/explugins](https://coredns.io/explugins) for all
 out-of-tree plugins.
 
+## Additional Plugins (Fork)
+
+This fork includes the following additional plugins:
+
+| Plugin | Package |
+|--------|---------|
+| mdns | [github.com/openshift/coredns-mdns](https://github.com/openshift/coredns-mdns) |
+
+
 ## Compilation from Source
 
 To compile CoreDNS, we assume you have a working Go setup. See various tutorials if you don’t have
