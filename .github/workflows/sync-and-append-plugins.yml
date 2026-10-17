@@ -1,0 +1,83 @@
+name: Sync upstream & add custom plugins
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync-and-append:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote and fetch
+        run: |
+          git remote add upstream https://github.com/coredns/coredns.git
+          git fetch upstream master --tags
+
+      - name: Reset to upstream/master
+        run: |
+          # Save all fork workflow files before reset
+          cp -r .github/workflows /tmp/fork-workflows
+
+          # Hard reset to upstream
+          git reset --hard upstream/master
+
+          # Restore fork workflow files (prevents needing workflows permission)
+          rm -rf .github/workflows
+          cp -r /tmp/fork-workflows .github/workflows
+
+      - name: Append custom plugins to plugin.cfg
+        run: |
+          # ---------- Custom plugin list ----------
+          # Add one line per plugin: name:package
+          PLUGINS=(
+            "mdns:github.com/openshift/coredns-mdns"
+          )
+          # -----------------------------------------
+
+          for entry in "${PLUGINS[@]}"; do
+            plugin_name="${entry%%:*}"
+            if ! grep -q "^${plugin_name}:" plugin.cfg; then
+              printf '%s\n' "$entry" >> plugin.cfg
+            fi
+          done
+
+      - name: Add custom plugin list to README.md
+        run: |
+          MARKER="## Additional Plugins (Fork)"
+          if ! grep -qF "$MARKER" README.md; then
+            # Insert section before "## Compilation from Source"
+            sed -i "/^## Compilation from Source/i\\
+          $MARKER\\
+          \\
+          This fork includes the following additional plugins:\\
+          \\
+          | Plugin | Package |\\
+          |--------|---------|\\
+          | mdns | [github.com/openshift/coredns-mdns](https://github.com/openshift/coredns-mdns) |\\
+          \\
+          " README.md
+          fi
+
+      - name: Commit and push if changed
+        run: |
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Sync upstream and add custom plugins"
+            git push --force origin master
+          else
+            echo "Nothing to commit – already up to date."
+          fi
